@@ -32,4 +32,10 @@ class User extends Authenticatable
         return $this->hasMany(Post::class);
     }
 
+    // user with active platform
+    public function activePlatforms()
+    {
+        return $this->belongsToMany(Platform::class, 'user_platform')
+            ->withTimestamps();
+    }
 }
