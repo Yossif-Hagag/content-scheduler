@@ -11,10 +11,19 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // user
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/profile', [AuthController::class, 'updateProfile']);
 
-    Route::apiResource('posts', PostController::class);
+    // Posts
+    Route::get('posts', [PostController::class, 'index']);
+    Route::post('posts', [PostController::class, 'store']);
+    Route::get('posts/{post}', [PostController::class, 'show']);
+    Route::post('posts/{post}', [PostController::class, 'update']);
+    Route::delete('posts/{post}', [PostController::class, 'destroy']);
+
+    // Platforms
     Route::get('platforms', [PlatformController::class, 'index']);
     Route::post('platforms/toggle', [PlatformController::class, 'toggleUserPlatform']);
 

@@ -17,9 +17,10 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|unique:users,email',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
+            'type'     => 'nullable|in:admin,customer',
         ]);
 
         if ($validator->fails()) {
@@ -27,15 +28,16 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'password' => bcrypt($request->password),
+            'type'     => $request->type ?? 'customer', // default to customer
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return $this->apiResponse([
-            'user' => $user,
+            'user'  => $user,
             'token' => $token,
         ], Response::HTTP_CREATED, 'User registered successfully');
     }
@@ -43,9 +45,10 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email',
+            'email'    => 'required|string|email',
             'password' => 'required|string',
         ]);
+
         if ($validator->fails()) {
             return $this->apiResponse(null, Response::HTTP_UNPROCESSABLE_ENTITY, $validator->errors()->first());
         }
@@ -59,25 +62,66 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return $this->apiResponse([
-            'user' => $user,
+            'user'  => $user,
             'token' => $token,
         ], Response::HTTP_OK, 'User logged in successfully');
     }
 
     public function profile(Request $request)
     {
-        if (!$request->user()) {
+        $user = $request->user();
+
+        if (!$user) {
             return $this->apiResponse(null, Response::HTTP_UNAUTHORIZED, 'User not authenticated.');
         }
-        return $this->apiResponse($request->user(), Response::HTTP_OK, 'User profile fetched successfully');
+
+        return $this->apiResponse($user, Response::HTTP_OK, 'User profile fetched successfully');
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return $this->apiResponse(null, Response::HTTP_UNAUTHORIZED, 'User not authenticated.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|string|email|unique:users,email,' . $user->id,
+            'password' => 'sometimes|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(null, Response::HTTP_UNPROCESSABLE_ENTITY, $validator->errors()->first());
+        }
+
+        if ($request->filled('name')) {
+            $user->name = $request->name;
+        }
+
+        if ($request->filled('email')) {
+            $user->email = $request->email;
+        }
+
+        if ($request->filled('password')) {
+            $user->password = bcrypt($request->password);
+        }
+
+        $user->save();
+
+        return $this->apiResponse($user, Response::HTTP_OK, 'Profile updated successfully');
     }
 
     public function logout(Request $request)
     {
-        if (!$request->user()) {
+        $user = $request->user();
+
+        if (!$user) {
             return $this->apiResponse(null, Response::HTTP_UNAUTHORIZED, 'User not authenticated.');
         }
-        $request->user()->currentAccessToken()->delete();
+
+        $user->currentAccessToken()->delete();
 
         return $this->apiResponse(null, Response::HTTP_OK, 'User logged out successfully');
     }
