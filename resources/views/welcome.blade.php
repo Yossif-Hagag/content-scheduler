@@ -35,8 +35,8 @@
 
         <div class="flex gap-6">
             @auth
-                <a href="/dashboard" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg text-lg transition transform hover:-translate-y-1 hover:scale-105">
-                    Dashboard
+                <a href="/admin" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg text-lg transition transform hover:-translate-y-1 hover:scale-105">
+                    Admin Dashboard
                 </a>
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
@@ -45,11 +45,11 @@
                     </button>
                 </form>
             @else
-                <a href="/dashboard/register"
+                {{-- <a href="/admin/register"
                    class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg text-lg transition transform hover:-translate-y-1 hover:scale-105">
                     Register
-                </a>
-                <a href="/dashboard/login"
+                </a> --}}
+                <a href="/admin/login"
                    class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-xl shadow-lg text-lg transition transform hover:-translate-y-1 hover:scale-105">
                     Login
                 </a>

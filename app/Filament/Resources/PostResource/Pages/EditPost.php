@@ -19,6 +19,8 @@ class EditPost extends EditRecord
     }
     protected function afterSave(): void
     {
-        $this->record->platforms()->sync($this->form->getState()['platforms']);
+        if (isset($this->form->getState()['platforms'])) {
+            $this->record->platforms()->sync($this->form->getState()['platforms']);
+        }
     }
 }

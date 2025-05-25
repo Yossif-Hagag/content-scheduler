@@ -25,10 +25,10 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
-            ->id('dashboard')
-            ->path('dashboard')
+            ->id('admin')
+            ->path('admin')
             ->login()
-            ->registration(Register::class)
+            // ->registration(Register::class)
             ->brandName('Content Scheduler')
             ->brandLogo(asset('assets/logo.png'))
             ->brandLogoHeight('50px')

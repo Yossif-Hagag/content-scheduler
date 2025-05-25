@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PostResource\Pages;
 use App\Models\Post;
+use App\Models\User;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -42,19 +43,16 @@ class PostResource extends Resource
                 ->required()
                 ->maxLength(255),
 
-            Textarea::make('content')
-                ->required()
-                ->maxLength(500),
-
-            FileUpload::make('image_url')
-                ->image()
-                ->directory('posts'),
-
             Select::make('platforms')
                 ->label('Platforms')
                 ->multiple()
-                ->relationship('platforms', 'name')
-                ->options(Platform::pluck('name', 'id'))
+                ->options(fn() => Platform::pluck('name', 'id')->toArray())
+                ->reactive()
+                ->afterStateHydrated(function ($state, callable $set, $record) {
+                    if ($record) {
+                        $set('platforms', $record->platforms->pluck('id')->toArray());
+                    }
+                })
                 ->required(),
 
             DateTimePicker::make('scheduled_time')
@@ -70,8 +68,22 @@ class PostResource extends Resource
                 ->default('draft')
                 ->required(),
 
-            Hidden::make('user_id')
-                ->default(fn() => Auth::id()),
+            Select::make('user_id')
+                ->label('User')
+                ->options(User::pluck('name', 'id'))
+                ->searchable()
+                ->required(),
+
+
+            Textarea::make('content')
+                ->required()
+                ->maxLength(500)
+                ->columnSpanFull(),
+
+            FileUpload::make('image_url')
+                ->image()
+                ->directory('posts')
+                ->columnSpanFull(),
         ]);
     }
 
@@ -88,7 +100,7 @@ class PostResource extends Resource
                     ->label('Scheduled Time')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('platforms')
                     ->label('Platforms')
@@ -109,6 +121,12 @@ class PostResource extends Resource
 
                 ImageColumn::make('image_url')
                     ->label('Image')
+                    ->toggleable(),
+
+                TextColumn::make('user.name')
+                    ->label('User')
+                    ->sortable()
+                    ->searchable()
                     ->toggleable(),
 
                 TextColumn::make('created_at')
@@ -166,7 +184,7 @@ class PostResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('user_id', Auth::id());
+            ->with('platforms');
     }
     public static function getModelLabel(): string
     {
