@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\ApiResponseTrait;
+use App\Enums\UserType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -57,6 +58,11 @@ class AuthController extends Controller
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return $this->apiResponse(null, Response::HTTP_UNAUTHORIZED, 'The provided credentials are incorrect.');
+        }
+
+        // Check if the user is a customer
+        if ($user->usertype !== UserType::Customer) {
+            return $this->apiResponse(null, Response::HTTP_FORBIDDEN, 'Only customers can login.');
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;

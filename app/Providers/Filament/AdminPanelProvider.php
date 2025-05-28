@@ -28,6 +28,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->authMiddleware([
+                'admin.only',
+            ])
             // ->registration(Register::class)
             ->brandName('Content Scheduler')
             ->brandLogo(asset('assets/logo.png'))

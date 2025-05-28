@@ -25,5 +25,5 @@ Route::middleware('auth:sanctum')->group(function () {
     // Platforms
     Route::get('platforms', [PlatformController::class, 'index']);
     Route::get('user/active-platforms', [PlatformController::class, 'showActivePlatformsToUsaer']);
-    Route::post('/user/platform/toggle', [PlatformController::class, 'toggleActivePlatform']);
+    Route::post('user/platform/toggle', [PlatformController::class, 'toggleActivePlatform']);
 });

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 class PlatformController extends Controller
 {
     use ApiResponseTrait;
+
     public function index()
     {
         $platforms = Platform::select('id', 'name')->get();
@@ -20,7 +21,7 @@ class PlatformController extends Controller
     public function showActivePlatformsToUsaer(Request $request)
     {
         $user = $request->user();
-        $activePlatforms = $user->activePlatforms()->select('id', 'name')->get();
+        $activePlatforms = $user->activePlatforms()->select('platforms.id', 'platforms.name')->get();
         return $this->apiResponse($activePlatforms, 200, 'Active platforms');
     }
 
@@ -41,7 +42,7 @@ class PlatformController extends Controller
             $user->activePlatforms()->detach($platformId);
         }
 
-        $activePlatforms = $user->activePlatforms()->pluck('id');
+        $activePlatforms = $user->activePlatforms()->pluck('platforms.id', 'platforms.name');
         return $this->apiResponse($activePlatforms, Response::HTTP_OK, 'Platform Status updated succesfully');
     }
 }
