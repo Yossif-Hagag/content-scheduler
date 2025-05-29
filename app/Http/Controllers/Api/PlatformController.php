@@ -18,7 +18,7 @@ class PlatformController extends Controller
         return $this->apiResponse($platforms, 200, 'Available platforms');
     }
 
-    public function showActivePlatformsToUsaer(Request $request)
+    public function showActivePlatformsToUser(Request $request)
     {
         $user = $request->user();
         $activePlatforms = $user->activePlatforms()->select('platforms.id', 'platforms.name')->get();

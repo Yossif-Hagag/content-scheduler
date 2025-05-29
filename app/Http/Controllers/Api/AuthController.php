@@ -61,7 +61,7 @@ class AuthController extends Controller
         }
 
         // Check if the user is a customer
-        if ($user->usertype !== UserType::Customer) {
+        if ($user->type !== UserType::Customer) {
             return $this->apiResponse(null, Response::HTTP_FORBIDDEN, 'Only customers can login.');
         }
 

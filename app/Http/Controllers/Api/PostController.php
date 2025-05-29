@@ -39,15 +39,25 @@ class PostController extends Controller
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        if (!is_array($request->platforms)) {
+            $request->merge([
+                'platforms' => (array) $request->platforms
+            ]);
+        }
+        $rules = [
             'title' => 'required|string|max:255',
             'content' => 'required|string|max:2000',
             'scheduled_time' => 'required|date',
             'status' => 'in:draft,scheduled,published',
             'platforms' => 'required|array',
             'platforms.*' => 'exists:platforms,id',
-            'image_url' => 'nullable|image|max:2048',
-        ]);
+        ];
+
+        if ($request->hasFile('image_url')) {
+            $rules['image_url'] = 'nullable|image|max:2048';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return $this->apiResponse(null, 422, $validator->errors()->first());
@@ -121,7 +131,7 @@ class PostController extends Controller
         if ($request->has('platforms')) {
             $platforms = Platform::whereIn('id', $request->platforms)->get();
         } else {
-            $platforms = $post->platforms; 
+            $platforms = $post->platforms;
         }
 
         foreach ($platforms as $platform) {
