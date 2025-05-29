@@ -47,7 +47,7 @@ class PostController extends Controller
         $rules = [
             'title' => 'required|string|max:255',
             'content' => 'required|string|max:2000',
-            'scheduled_time' => 'required|date',
+            'scheduled_time' => 'nullable|date',
             'status' => 'in:draft,scheduled,published',
             'platforms' => 'required|array',
             'platforms.*' => 'exists:platforms,id',
@@ -61,6 +61,24 @@ class PostController extends Controller
 
         if ($validator->fails()) {
             return $this->apiResponse(null, 422, $validator->errors()->first());
+        }
+
+        //Draft posts cannot have a scheduled time
+        if ($request->status === 'draft' && $request->scheduled_time) {
+            return $this->apiResponse(null, 422, 'Draft posts cannot have a scheduled time.');
+        }
+        // Check if the user has reached the daily limit for scheduled posts
+        if ($request->status === 'scheduled' && $request->scheduled_time) {
+            $scheduledDate = Carbon::parse($request->scheduled_time)->toDateString();
+
+            $scheduledCount = Post::where('user_id', $request->user()->id)
+                ->where('status', 'scheduled')
+                ->whereDate('scheduled_time', $scheduledDate)
+                ->count();
+
+            if ($scheduledCount >= 10) {
+                return $this->apiResponse(null, 422, 'You can only schedule up to 10 posts per day.');
+            }
         }
 
         $platforms = Platform::whereIn('id', $request->platforms)->get();
@@ -115,7 +133,7 @@ class PostController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'sometimes|string|max:255',
             'content' => 'sometimes|string|max:2000',
-            'scheduled_time' => 'sometimes|date',
+            'scheduled_time' => 'nullable|sometimes|date',
             'status' => 'in:draft,scheduled,published',
             'platforms' => 'sometimes|array',
             'platforms.*' => 'exists:platforms,id',
@@ -127,6 +145,24 @@ class PostController extends Controller
         }
 
         $content = $request->content ?? $post->content;
+
+        //Draft posts cannot have a scheduled time
+        if ($request->status === 'draft' && $request->scheduled_time) {
+            return $this->apiResponse(null, 422, 'Draft posts cannot have a scheduled time.');
+        }
+        // Check if the user has reached the daily limit for scheduled posts
+        if ($request->status === 'scheduled' && $request->scheduled_time) {
+            $scheduledDate = Carbon::parse($request->scheduled_time)->toDateString();
+
+            $scheduledCount = Post::where('user_id', $request->user()->id)
+                ->where('status', 'scheduled')
+                ->whereDate('scheduled_time', $scheduledDate)
+                ->count();
+
+            if ($scheduledCount >= 10) {
+                return $this->apiResponse(null, 422, 'You can only schedule up to 10 posts per day.');
+            }
+        }
 
         if ($request->has('platforms')) {
             $platforms = Platform::whereIn('id', $request->platforms)->get();
@@ -163,7 +199,6 @@ class PostController extends Controller
 
         return $this->apiResponse($post->load('platforms'), 200, 'Post updated successfully');
     }
-
 
     public function destroy(Post $post, Request $request)
     {
