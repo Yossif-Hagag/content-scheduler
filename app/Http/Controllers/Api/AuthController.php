@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Services\ActivityLogger;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\ApiResponseTrait;
@@ -18,10 +19,10 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|unique:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
-            'type'     => 'nullable|in:admin,customer',
+            'type' => 'nullable|in:admin,customer',
         ]);
 
         if ($validator->fails()) {
@@ -29,16 +30,18 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
+            'name' => $request->name,
+            'email' => $request->email,
             'password' => bcrypt($request->password),
-            'type'     => $request->type ?? 'customer', // default to customer
+            'type' => $request->type ?? 'customer', // default to customer
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        ActivityLogger::log($user->id, 'register', $user->name . " registered with email " . $user->email);
+
         return $this->apiResponse([
-            'user'  => $user,
+            'user' => $user,
             'token' => $token,
         ], Response::HTTP_CREATED, 'User registered successfully');
     }
@@ -46,7 +49,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email'    => 'required|string|email',
+            'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
 
@@ -67,8 +70,10 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        ActivityLogger::log($user->id, 'login', $user->name . " logged in at " . now());
+
         return $this->apiResponse([
-            'user'  => $user,
+            'user' => $user,
             'token' => $token,
         ], Response::HTTP_OK, 'User logged in successfully');
     }
@@ -116,6 +121,8 @@ class AuthController extends Controller
 
         $user->save();
 
+        ActivityLogger::log(auth()->id(), 'Update Profile', auth()->user()->name . " updated their profile.");
+
         return $this->apiResponse($user, Response::HTTP_OK, 'Profile updated successfully');
     }
 
@@ -128,6 +135,8 @@ class AuthController extends Controller
         }
 
         $user->currentAccessToken()->delete();
+
+        ActivityLogger::log(auth()->id(), 'logout', auth()->user()->name . " logged out at " . now());
 
         return $this->apiResponse(null, Response::HTTP_OK, 'User logged out successfully');
     }

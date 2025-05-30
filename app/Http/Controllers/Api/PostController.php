@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Services\ActivityLogger;
 use App\Http\Controllers\Controller;
-
 use App\Models\Post;
 use App\Models\Platform;
 use Illuminate\Http\Request;
@@ -112,6 +112,8 @@ class PostController extends Controller
         $post->save();
         $post->platforms()->sync($request->platforms);
 
+        ActivityLogger::log(auth()->id(), 'Created Post', 'User created a new post titled "' . $post->title . '"');
+
         return $this->apiResponse($post->load('platforms'), 201, 'Post created successfully');
     }
 
@@ -197,6 +199,8 @@ class PostController extends Controller
             $post->platforms()->sync($request->platforms);
         }
 
+        ActivityLogger::log(auth()->id(), 'Updated Post', 'User updated the post titled "' . $post->title . '"');
+
         return $this->apiResponse($post->load('platforms'), 200, 'Post updated successfully');
     }
 
@@ -208,6 +212,8 @@ class PostController extends Controller
 
         $post->platforms()->detach();
         $post->delete();
+
+        ActivityLogger::log(auth()->id(), 'Deleted Post', 'User deleted the post titled "' . $post->title . '"');
 
         return $this->apiResponse(null, Response::HTTP_OK, 'Post deleted successfully');
     }

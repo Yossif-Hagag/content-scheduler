@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Services\ActivityLogger;
 use App\ApiResponseTrait;
 use Symfony\Component\HttpFoundation\Response;
 use App\Http\Controllers\Controller;
@@ -43,6 +44,9 @@ class PlatformController extends Controller
         }
 
         $activePlatforms = $user->activePlatforms()->pluck('platforms.id', 'platforms.name');
+
+        ActivityLogger::log(auth()->id(), 'toggle Active Platform', auth()->user()->name . " toggled platform name {$activePlatforms->get($platformId)} with ID {$platformId} to {$action}");
+
         return $this->apiResponse($activePlatforms, Response::HTTP_OK, 'Platform Status updated succesfully');
     }
 }
